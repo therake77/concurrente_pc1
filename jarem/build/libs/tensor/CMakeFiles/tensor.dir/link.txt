@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtensor.a CMakeFiles/tensor.dir/src/core/Shape.cpp.o CMakeFiles/tensor.dir/src/core/Tensor.cpp.o CMakeFiles/tensor.dir/src/hardware/CpuDevice.cpp.o CMakeFiles/tensor.dir/src/hardware/DeviceManager.cpp.o CMakeFiles/tensor.dir/src/math/CpuMath.cpp.o CMakeFiles/tensor.dir/src/math/TensorMath.cpp.o
-/usr/bin/ranlib libtensor.a

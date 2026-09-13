@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/main.dir/link.d CMakeFiles/main.dir/main.cpp.o CMakeFiles/main.dir/src/SimpleNetwork.cpp.o -o main  libs/tensor/libtensor.a libs/dllayers/libdllayers.a libs/tensor/libtensor.a
