@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/therake77/Desktop/concurrente_pc1/jarem/build/cmake_install.cmake",
+		"/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/cmake_install.cmake",
+		"/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

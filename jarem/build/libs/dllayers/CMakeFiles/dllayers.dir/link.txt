@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdllayers.a CMakeFiles/dllayers.dir/src/ActivationLayer.cpp.o CMakeFiles/dllayers.dir/src/FullyConnected.cpp.o CMakeFiles/dllayers.dir/src/ConvLayer.cpp.o
+/usr/bin/ranlib libdllayers.a

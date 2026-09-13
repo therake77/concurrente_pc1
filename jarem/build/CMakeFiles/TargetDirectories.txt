@@ -1,0 +1,9 @@
+/home/therake77/Desktop/concurrente_pc1/jarem/build/CMakeFiles/main.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/CMakeFiles/edit_cache.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/CMakeFiles/rebuild_cache.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/edit_cache.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/rebuild_cache.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/dllayers.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/edit_cache.dir
+/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,68 @@
+[
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/$(CMAKE_CURRENT_SOURCE_DIR)/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/include -g -std=c++17 -o CMakeFiles/main.dir/main.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/main.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/main.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/CMakeFiles/main.dir/main.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/$(CMAKE_CURRENT_SOURCE_DIR)/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/include -g -std=c++17 -o CMakeFiles/main.dir/src/SimpleNetwork.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/src/SimpleNetwork.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/src/SimpleNetwork.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/CMakeFiles/main.dir/src/SimpleNetwork.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/core/Shape.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/core/Shape.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/core/Shape.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/core/Shape.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/core/Tensor.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/core/Tensor.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/core/Tensor.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/core/Tensor.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/hardware/CpuDevice.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/hardware/CpuDevice.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/hardware/CpuDevice.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/hardware/CpuDevice.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/hardware/DeviceManager.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/hardware/DeviceManager.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/hardware/DeviceManager.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/hardware/DeviceManager.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/math/CpuMath.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/math/CpuMath.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/math/CpuMath.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/math/CpuMath.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -g -std=c++17 -o libs/tensor/CMakeFiles/tensor.dir/src/math/TensorMath.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/math/TensorMath.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/src/math/TensorMath.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/tensor/CMakeFiles/tensor.dir/src/math/TensorMath.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -g -std=c++17 -o libs/dllayers/CMakeFiles/dllayers.dir/src/ActivationLayer.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/ActivationLayer.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/ActivationLayer.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/dllayers.dir/src/ActivationLayer.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -g -std=c++17 -o libs/dllayers/CMakeFiles/dllayers.dir/src/FullyConnected.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/FullyConnected.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/FullyConnected.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/dllayers.dir/src/FullyConnected.cpp.o"
+},
+{
+  "directory": "/home/therake77/Desktop/concurrente_pc1/jarem/build",
+  "command": "/usr/bin/clang++ -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/include -I/home/therake77/Desktop/concurrente_pc1/jarem/include -I/home/therake77/Desktop/concurrente_pc1/jarem/libs/tensor/include -g -std=c++17 -o libs/dllayers/CMakeFiles/dllayers.dir/src/ConvLayer.cpp.o -c /home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/ConvLayer.cpp",
+  "file": "/home/therake77/Desktop/concurrente_pc1/jarem/libs/dllayers/src/ConvLayer.cpp",
+  "output": "/home/therake77/Desktop/concurrente_pc1/jarem/build/libs/dllayers/CMakeFiles/dllayers.dir/src/ConvLayer.cpp.o"
+}
+]
