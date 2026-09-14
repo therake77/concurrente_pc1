@@ -1,12 +1,14 @@
+#pragma once
 #include <hardware/Device.hpp>
 #include <math/CpuMath.hpp>
+
 
 namespace MyTensors::Hardware{
     class CpuDevice : public Device {
     public:
         ~CpuDevice() override = default;
 
-        CpuDevice(){ this->math = std::make_unique<CpuMath>(); };
+        CpuDevice(){ this->math = std::make_unique<MyTensors::Math::Base::CpuMath>(); };
 
         /*
             @brief Allocates `_bytes` bytes in memory

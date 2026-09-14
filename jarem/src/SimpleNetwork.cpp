@@ -5,7 +5,7 @@ const std::shared_ptr<const Tensor> SimpleNetwork::forward(const Tensor& input){
         if(this->layers.size() > 0){
             this->layers[0]->forward(input);
             for(std::size_t i = 1 ; i < this->layers.size(); i++){
-                this->layers[0]->forward(
+                this->layers[i]->forward(
                     *(this->layers[i-1]->_forward_out)
                 );
             }
@@ -54,8 +54,8 @@ const std::shared_ptr<const Tensor> SimpleNetwork::backwards(const Tensor& label
         //Feed intermediate layers
         for(std::size_t i = n_layers - 1; i -->1;){
             this->layers[i]->backward(
-                *(this->layers[i]->_backward_out),
-                *(this->layers[i]->_forward_out)
+                *(this->layers[i+1]->_backward_out),
+                *(this->layers[i-1]->_forward_out)
             );
         }
         //Feed the first layer

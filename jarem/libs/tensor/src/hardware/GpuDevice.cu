@@ -11,9 +11,8 @@
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 
-using namespace MyTensors::Hardware;
 
-void* GpuDevice::allocate(size_t _n_bytes){
+void* MyTensors::Hardware::GpuDevice::allocate(size_t _n_bytes){
     void* ptr;
     cudaError_t err = cudaMalloc(&ptr, _n_bytes);
     if(err != cudaSuccess){
@@ -23,25 +22,25 @@ void* GpuDevice::allocate(size_t _n_bytes){
     return ptr;
 }
 
-void GpuDevice::free(void* ptr){
+void MyTensors::Hardware::GpuDevice::free(void* ptr){
     cudaFree(ptr);
 }
 
-void GpuDevice::copy_to_host(void* host_dst, const void* src, size_t size){
+void MyTensors::Hardware::GpuDevice::copy_to_host(void* host_dst, const void* src, size_t size){
     cudaError_t err = cudaMemcpy(host_dst, src, size, cudaMemcpyDeviceToHost);
     if(err != cudaSuccess){
         throw std::runtime_error("Failed to copy data from GPU to host");
     }
 }
 
-void GpuDevice::copy_to_device(void* dst, const void* host_src, size_t size){
+void MyTensors::Hardware::GpuDevice::copy_to_device(void* dst, const void* host_src, size_t size){
     cudaError_t err = cudaMemcpy(dst, host_src, size, cudaMemcpyHostToDevice);
     if(err != cudaSuccess){
         throw std::runtime_error("Failed to copy data from host to GPU");
     }
 }
 
-void GpuDevice::copy_device_to_device(void* dst, const void* src, size_t size){
+void MyTensors::Hardware::GpuDevice::copy_device_to_device(void* dst, const void* src, size_t size){
     cudaError_t err = cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice);
     if(err != cudaSuccess){
         throw std::runtime_error("Failed to copy data within GPU");
@@ -50,7 +49,7 @@ void GpuDevice::copy_device_to_device(void* dst, const void* src, size_t size){
 /*
     Sets the memory with n_floats floats
 */
-void GpuDevice::memset(void* dst, float value, size_t n_floats){
+void MyTensors::Hardware::GpuDevice::memset(void* dst, float value, size_t n_floats){
     uint32_t asRaw = 0; 
     std::memcpy(&asRaw, &value, sizeof(float));
     
@@ -92,13 +91,13 @@ namespace MyTensors::Hardware::Kernels{
 
 /*Set `dst` memory region holding `_n` floats with a random float value from [0,1]. 
 `dst` is interpreted always as a float region of memory*/
-void GpuDevice::memset_rand(void* dst, size_t _n){
+void MyTensors::Hardware::GpuDevice::memset_rand(void* dst, size_t _n){
     float* f_dst = static_cast<float*>(dst);
     constexpr std::size_t block_size = 256;
     std::size_t grid_size = (_n + block_size - 1) / block_size;
     unsigned long long seed = (unsigned long long)std::chrono::system_clock::now()
                                 .time_since_epoch().count();
-    LLCN_KERNELS::rand_fill_kernel<<<grid_size,block_size>>>(
+    MyTensors::Hardware::Kernels::rand_fill_kernel<<<grid_size,block_size>>>(
         f_dst,
         _n,
         seed
@@ -113,7 +112,7 @@ void GpuDevice::memset_rand(void* dst, size_t _n){
 
 
 namespace MyTensors::Hardware::Kernels{
-
+    using MyTensors::Core::TENSOR_MAX_DIM;
     struct MakeContiguousParams{
         size_t shapes[TENSOR_MAX_DIM];
         size_t faulty_strides[TENSOR_MAX_DIM];
@@ -154,13 +153,13 @@ namespace MyTensors::Hardware::Kernels{
     }
 }
 
-void GpuDevice::memset_rand_normal_dist(void* dst, float mean, float std_dev, size_t _n){
+void MyTensors::Hardware::GpuDevice::memset_rand_normal_dist(void* dst, float mean, float std_dev, size_t _n){
     float* f_dst = static_cast<float*>(dst);
     constexpr std::size_t block_size = 256;
     std::size_t grid_size = (_n + block_size - 1) / block_size;
     unsigned long long seed = (unsigned long long)std::chrono::system_clock::now()
                                 .time_since_epoch().count();
-    LLCN_KERNELS::normal_rand_fill_kernel<<<grid_size,block_size>>>(
+    Kernels::normal_rand_fill_kernel<<<grid_size,block_size>>>(
         f_dst,
         _n,
         mean,
@@ -175,13 +174,14 @@ void GpuDevice::memset_rand_normal_dist(void* dst, float mean, float std_dev, si
     return;
 }
 
-void GpuDevice::make_contiguous(
+void MyTensors::Hardware::GpuDevice::make_contiguous(
     void* dst, 
     const void* src, 
     const std::vector<std::size_t> shapes,
     const std::vector<std::size_t> faulty_strides
 ){
-    using namespace LLCN_KERNELS;
+    using MyTensors::Core::TENSOR_MAX_DIM;
+    using MyTensors::Hardware::Kernels::MakeContiguousParams;
     assert(shapes.size() == faulty_strides.size());
     float* f_dst = static_cast<float*>(dst);
     const float* f_src = static_cast<const float*>(src);
@@ -199,7 +199,7 @@ void GpuDevice::make_contiguous(
 
     MakeContiguousParams param = MakeContiguousParams(shapes.data(),faulty_strides.data()); 
 
-    make_contiguous_kernel<<<grid_size,block_size>>>(
+    MyTensors::Hardware::Kernels::make_contiguous_kernel<<<grid_size,block_size>>>(
         f_dst,
         f_src,
         n_dim,
@@ -210,11 +210,11 @@ void GpuDevice::make_contiguous(
     return;
 }
 
-DeviceType GpuDevice::get_type() const {
+MyTensors::Hardware::DeviceType MyTensors::Hardware::GpuDevice::get_type() const {
     return DeviceType::GPU;
 }
 
-std::string GpuDevice::get_name() const {
+std::string MyTensors::Hardware::GpuDevice::get_name() const {
     return "GPU";
 }
 

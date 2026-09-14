@@ -1,7 +1,13 @@
 #include <math/TensorMath.hpp>
 #include <stdexcept>
 
+using MyTensors::Core::Tensor;
+using MyTensors::Core::Shape;
+using MyTensors::Hardware::DeviceType;
+using MyTensors::Core::TENSOR_MAX_DIM;
+
 namespace{
+    
     /*Ensures `a` and `b` have the same exact shape*/
     void _ensure_same_shape(const Tensor& a, const Tensor&b){
         if(a.shape != b.shape){ throw std::runtime_error("Error: Tensor shape mismatch"); }
@@ -102,6 +108,8 @@ namespace{
     }
 
 };
+
+using namespace MyTensors::Math;
 /*Function that adds two tensors component-wise. It is safe to put the input argument `a` as `out`*/
 void TensorMath::add(const Tensor& a, const Tensor&b, Tensor& out){
     _ensure_same_device(a,b);
@@ -285,51 +293,6 @@ void TensorMath::matmul(const Tensor& a, const Tensor&b , Tensor& out){
     //Finish
 }
 
-/*
-Convolution operation.
-Expects 4D tensors. No exceptions allowed.
-*/
-void TensorMath::conv2D(const Tensor& in, const Tensor& ker, Tensor& out, size_t stride, size_t padding){
-    //Device guards
-    _ensure_same_device(in,ker);
-    _ensure_same_device(ker,out);
-    //Ensure all tensors are EXACTLY 4D
-    if(in.shape.n_dim != 4 || ker.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Tensors must be 4-dimensional"); }
-    
-    //Should we implement all guards here? YES TODO(IMPLEMENT THE GUARDS)
-
-    auto device = in.getDevice();
-    
-    //just call the underlying math function
-    device->math->conv2D(
-        in.data(),in.shape,
-        ker.data(),ker.shape,
-        out.data(),out.shape,
-        {stride,stride},
-        {padding,padding}
-    );
-}
-
-void TensorMath::conv2D(const Tensor& in, const Tensor& ker, Tensor& out, std::array<size_t,2> stride, std::array<size_t,2> padding){
-    _ensure_same_device(in,ker);
-    _ensure_same_device(ker,out);
-    //Ensure all tensors are EXACTLY 4D
-    if(in.shape.n_dim != 4 || ker.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Tensors must be 4-dimensional"); }
-    
-    //Should we implement all guards here?
-
-    auto device = in.getDevice();
-    
-    //just call the underlying math function
-    device->math->conv2D(
-        in.data(),in.shape,
-        ker.data(),ker.shape,
-        out.data(),out.shape,
-        stride,
-        padding
-    );
-}
-
 void TensorMath::im2col2D(
     const Tensor& in, 
     std::array<std::size_t,2> window_shape,
@@ -496,244 +459,4 @@ Tensor TensorMath::reshape(const Tensor& a, std::array<size_t, TENSOR_MAX_DIM> n
         out.data()[i] = a.data()[i];
     }
     return out;
-}
-
-Tensor TensorMath::transpose(const Tensor& a){
-    std::array<size_t, TENSOR_MAX_DIM> out_shape = a.shape._shapes;
-
-    if(a.shape.n_dim >= 2){
-        size_t last = a.shape.n_dim - 1;
-        size_t prev = a.shape.n_dim - 2;
-
-        size_t tmp = out_shape[prev];
-        out_shape[prev] = out_shape[last];
-        out_shape[last] = tmp;
-    }
-
-    auto device = a.getDevice();
-    Tensor out(out_shape, device);
-    device->math->transpose(a.data(), a.shape, out.data(), out.shape);
-    return out;
-}
-
-void TensorMath::max_pooling2d(
-    const Tensor& in,  Tensor& out, Tensor& mask, std::array<std::size_t,2> strides,  
-    std::array<std::size_t,2> window_shapes, 
-    std::array<std::size_t,2> padding
-){
-    _ensure_same_device(in,out);
-    _ensure_same_device(out,mask);
-    _ensure_same_shape(in,mask);
-    //Ensure in,out,mask are 4D
-    if( in.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Unexpected shape"); }
-    //Ensure in and out shapes follows the rules of max_pooling
-    if( in.shape[0] != out.shape[0] || in.shape[1] != out.shape[1] ) { throw std::runtime_error("Error: Unexpected shape"); }
-    if( 
-        out.shape[2] != (in.shape[2] + 2*padding[0] - window_shapes[0])/strides[0] + 1 ||
-        out.shape[3] != (in.shape[3] + 2*padding[1] - window_shapes[1])/strides[1] + 1 
-    ){
-        throw std::runtime_error("Error: Unexpected shape");
-    }
-    //All requirements met, call the function
-    auto dev = in.getDevice();
-    dev->math->max_pooling2D(
-        in.data(),
-        in.shape,
-        strides,
-        window_shapes,
-        mask.data(),
-        mask.shape,
-        out.data(),
-        out.shape,
-        padding
-    );
-
-    return;
-}
-
-void TensorMath::inv_max_pooling2D(
-    const Tensor& max_pooled,
-    std::array<std::size_t,2> strides,  
-    std::array<std::size_t,2> window_shapes,    //(Height , Width)
-    const Tensor& mask,
-    Tensor& out,
-    std::array<std::size_t, 2> padding
-){
-    _ensure_same_device(max_pooled,mask);
-    _ensure_same_device(mask,out);
-    _ensure_same_shape(mask,out);
-    if( max_pooled.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Unexpected shape"); }
-    if( max_pooled.shape[0] != out.shape[0] || max_pooled.shape[1] != out.shape[1] ) { throw std::runtime_error("Error: Unexpected shape"); }
-    if( 
-        max_pooled.shape[2] != (out.shape[2] + 2*padding[0] - window_shapes[0])/strides[0] + 1 ||
-        max_pooled.shape[3] != (out.shape[3] + 2*padding[1] - window_shapes[1])/strides[1] + 1 
-    ){
-        throw std::runtime_error("Error: Unexpected shape");
-    }
-
-    auto device = max_pooled.getDevice();
-    device->math->inv_max_pooling2D(
-        max_pooled.data(),
-        max_pooled.shape,
-        strides,
-        window_shapes,
-        mask.data(),
-        mask.shape,
-        out.data(),
-        out.shape,
-        padding
-    );
-
-
-}
-
-void TensorMath::avg_pooling2d(
-    const Tensor& in, Tensor& out, std::array<std::size_t,2> strides,  
-    std::array<std::size_t,2> window_shapes, 
-    std::array<std::size_t, 2> padding
-){
-    _ensure_same_device(in,out);
-    if( in.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Unexpected shape"); }
-    //Ensure in and out shapes follows the rules of max_pooling
-    if( in.shape[0] != out.shape[0] || in.shape[1] != out.shape[1] ) { throw std::runtime_error("Error: Unexpected shape"); }
-    if( 
-        out.shape[2] != (in.shape[2] + 2*padding[0] - window_shapes[0])/strides[0] + 1 ||
-        out.shape[3] != (in.shape[3] + 2*padding[1] - window_shapes[1])/strides[1] + 1 
-    ){
-        throw std::runtime_error("Error: Unexpected shape");
-    }
-    //All requirements met, call the function
-    auto dev = in.getDevice();
-    dev->math->avg_pooling2D(
-        in.data(),
-        in.shape,
-        strides,
-        window_shapes,
-        out.data(),
-        out.shape,
-        padding
-    );
-
-    return;
-}
-
-void TensorMath::inv_avg_pooling2D(
-    const Tensor& avg_pooled,
-    std::array<std::size_t,2> strides,  
-    std::array<std::size_t,2> window_shapes,    //(Height , Width)
-    Tensor& out,
-    std::array<std::size_t, 2> padding
-){
-    _ensure_same_device(avg_pooled,out);
-
-    if( avg_pooled.shape.n_dim != 4 || out.shape.n_dim != 4){ throw std::runtime_error("Error: Unexpected shape"); }
-    if( avg_pooled.shape[0] != out.shape[0] || avg_pooled.shape[1] != out.shape[1] ) { throw std::runtime_error("Error: Unexpected shape"); }
-    if( 
-        avg_pooled.shape[2] != (out.shape[2] + 2*padding[0] - window_shapes[0])/strides[0] + 1 ||
-        avg_pooled.shape[3] != (out.shape[3] + 2*padding[1] - window_shapes[1])/strides[1] + 1 
-    ){
-        throw std::runtime_error("Error: Unexpected shape");
-    }
-
-    auto device = avg_pooled.getDevice();
-    device->math->inv_avg_pooling2D(
-        avg_pooled.data(),
-        avg_pooled.shape,
-        strides,
-        window_shapes,
-        out.data(),
-        out.shape,
-        padding
-    );
-    
-    return;
-}
-
-
-void TensorMath::binary_positive_mask(
-    const Tensor& in,
-    Tensor& out
-){
-    _ensure_same_device(in,out);
-    _ensure_same_shape(in,out);
-
-    auto device = in.getDevice();
-
-    device->math->binary_positive_mask(
-        in.data(),
-        in.shape,
-        out.data(),
-        out.shape
-    );
-    
-    return;
-}
-
-void TensorMath::mean(
-    const Tensor& in,
-    std::size_t axis,
-    Tensor& out
-){
-    _ensure_same_device(in,out);
-    _check_dimensionality(out.shape, 1);
-    if(in.shape[axis] != out.shape[0]){ throw std::runtime_error("Error: Unexpected out shape"); }
-
-    auto device = in.getDevice();
-    device->math->mean(
-        in.data(),
-        in.shape,
-        out.data(),
-        out.shape,
-        axis
-    );
-
-}
-
-void TensorMath::variance(
-    const Tensor& in,
-    const Tensor& means,
-    std::size_t axis,
-    Tensor& out
-){
-    _ensure_same_device(in,out);
-    _ensure_same_device(means,out);
-    _check_dimensionality(out.shape, 1);
-    _check_dimensionality(means.shape,1);
-
-    if(in.shape[axis] != out.shape[0] || in.shape[axis] != means.shape[0]){ 
-        throw std::runtime_error("Error: Unexpected out shape"); 
-    }
-    
-    auto device = in.getDevice();
-    device->math->variance(
-        in.data(),
-        in.shape,
-        means.data(),
-        means.shape,
-        out.data(),
-        out.shape,
-        axis
-    );
-}
-
-void TensorMath::reduce_all(
-    const Tensor& in,
-    Tensor& out,
-    std::size_t axis
-){
-    _ensure_same_device(in,out);
-    _check_dimensionality(out.shape,1);
-    if(in.shape[axis] != out.shape[0]){ 
-        throw std::runtime_error("Error: Unexpected out shape"); 
-    }
-
-    auto dev = in.getDevice();
-    dev->math->reduce_all(
-        in.data(),
-        in.shape,
-        out.data(),
-        out.shape,
-        axis
-    );
-    return;
 }

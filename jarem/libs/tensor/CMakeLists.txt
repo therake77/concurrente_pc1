@@ -16,6 +16,7 @@ target_include_directories( tensor
 )
 
 if(CUDA_ENABLED)
+    set(CUDA_ARCHITECTURES native)
     message("CUDA Toolkit found. Building CUDA-dependent targets")
     target_compile_definitions(
         tensor

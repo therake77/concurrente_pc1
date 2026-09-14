@@ -1,4 +1,6 @@
+#pragma once
 #include <math/Math.hpp>
+
 
 namespace MyTensors::Math::Base{
     constexpr std::size_t THREADS_PER_BLOCK = 256;

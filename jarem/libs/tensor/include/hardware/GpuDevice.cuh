@@ -1,3 +1,4 @@
+#pragma once
 #include <hardware/Device.hpp>
 #include <math/GpuMath.cuh>
 #ifdef __USE_CUDA__
@@ -6,8 +7,8 @@ namespace MyTensors::Hardware{
     public:
 
         ~GpuDevice() override = default;
-        
-        GpuDevice(){ this->math = std::make_unique<GpuMath>(); }
+
+        GpuDevice(){ this->math = std::make_unique<MyTensors::Math::Base::GpuMath>(); }
 
         void* allocate(size_t size) override;
         void free(void* ptr) override;

@@ -316,27 +316,37 @@
             size_t M,size_t N,size_t K,
             size_t n_dim
         ){
-            size_t batch_idx = blockIdx.z;
+
+            //Where in the upper dimensions we are?
+            size_t batch_idx = blockIdx.z; 
             size_t batch_coords[TENSOR_MAX_DIM];
-            
+
+            //Specific coordinates for out tensor (remember, we are broadcasting)
             _compute_coords_from_idx(batch_idx,batch_coords,out_shape,n_dim);
-            
+            //Specific coordinates for in tensor (remember, we are broadcasting)
             size_t a_batch_idx = _compute_idx_from_coords(batch_coords,a_shape,n_dim);  
             size_t b_batch_idx = _compute_idx_from_coords(batch_coords,b_shape,n_dim);  
             size_t out_batch_idx = _compute_idx_from_coords(batch_coords,out_shape,n_dim);  
 
+            //We have the real offsets of the NxK and the KxM blocks of the current "batch"
+            //Compute the actual slices
             const float* a_slice = a + a_batch_idx;
             const float* b_slice = b + b_batch_idx;
             float* out_slice = out + out_batch_idx;
 
+            //Compute the real index. Where in the output matrix NxM we are?
             size_t row = blockIdx.y * TILE_SIZE + threadIdx.y;
             size_t col = blockIdx.x * TILE_SIZE + threadIdx.x;
-
+            
+            //Prepare loading
             __shared__ float tile_A[TILE_SIZE][TILE_SIZE];
             __shared__ float tile_B[TILE_SIZE][TILE_SIZE];
             float acc = 0.0f;
-
+            //How many tiles would we need to load completely A's k-row and B's k-column?
+            //Remember, TILE_SIZE < K
+            //Note: Implement safe-guards when TILE_SIZE > = k. We are wasting compute time here!
             size_t n_tiles = (K + TILE_SIZE - 1 )/TILE_SIZE;
+            
             for(size_t i = 0; i < n_tiles; i++){
                 //Load tile_A
                 size_t k_row = i*TILE_SIZE + threadIdx.y;
@@ -382,6 +392,7 @@
             size_t pad_h, size_t pad_w,
             size_t total_elements
         ){
+            //Remember: ker @ im2colMatrix
             size_t flat_idx = blockIdx.x * blockDim.x + threadIdx.x;
             if(flat_idx >= total_elements) return;
 
@@ -542,6 +553,10 @@
     using namespace MyTensors::Math::Base;
     //Math backend API
     void GpuMath::add(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) {
+        using Kernels::debug_check_ptr;
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        
 
         assert(a_shape == b_shape);
         assert(a_shape == out_shape);
@@ -558,8 +573,8 @@
         GpuShape gpu_b_shape = GpuShape::from_shape(b_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(a_shape);
-        add_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(a_shape);
+        Kernels::add_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             b,
@@ -580,6 +595,9 @@
 
     void GpuMath::sub(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) {
 
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+
         assert(a_shape == b_shape);
         assert(a_shape == out_shape);
         size_t n_dims = out_shape.n_dim;
@@ -589,8 +607,8 @@
         GpuShape gpu_b_shape = GpuShape::from_shape(b_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(a_shape);
-        sub_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(a_shape);
+        Kernels::sub_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             b,
@@ -609,14 +627,16 @@
     }
 
     void GpuMath::scale(const float* a, float* out, float _n, Shape shape) {
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
 
         size_t n_dims = shape.n_dim;
         size_t n_elements = shape.n_elements;
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(shape);
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(shape);
         
         GpuShape gpu_shape = GpuShape::from_shape(shape);
 
-        scale_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Kernels::scale_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_shape,
             _n,
@@ -634,6 +654,8 @@
     }
 
     void GpuMath::multiply(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) {
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
 
         assert(a_shape == b_shape);
         assert(a_shape == out_shape);
@@ -644,8 +666,8 @@
         GpuShape gpu_b_shape = GpuShape::from_shape(b_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(a_shape);
-        multiply_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(a_shape);
+        Kernels::multiply_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             b,
@@ -664,6 +686,8 @@
     }
 
     void GpuMath::divide(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) {
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
         assert(a_shape == b_shape);
         assert(a_shape == out_shape);
         size_t n_dims = out_shape.n_dim;
@@ -673,8 +697,8 @@
         GpuShape gpu_b_shape = GpuShape::from_shape(b_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(a_shape);
-        divide_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(a_shape);
+        Kernels::divide_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             b,
@@ -693,15 +717,16 @@
     }
 
     void GpuMath::sqrt(const float* a,  Shape a_shape, float* out, Shape out_shape) {
-
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
         assert(a_shape == out_shape);
         GpuShape gpu_a_shape = GpuShape::from_shape(a_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
         size_t n_dims = out_shape.n_dim;
         size_t n_elements = out_shape.n_elements;
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(out_shape);
-        sqrt_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(out_shape);
+        Kernels::sqrt_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             out,
@@ -717,15 +742,16 @@
     }
 
     void GpuMath::pow(const float* a,  Shape a_shape, int _n, float* out, Shape out_shape) {
-
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
         assert(a_shape == out_shape);
         GpuShape gpu_a_shape = GpuShape::from_shape(a_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
         
         size_t n_dims = out_shape.n_dim;
         size_t n_elements = out_shape.n_elements;
-        Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(out_shape);
-        LLCN_MATH_KERNELS::pow_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Gpu1DKernelDimension dims = Kernels::_compute_1D_dispatch_dimensions(out_shape);
+        Kernels::pow_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             _n,
@@ -744,7 +770,9 @@
 
 
     void GpuMath::log(const float* a,  Shape a_shape, float* out, Shape out_shape){
-
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        using Kernels::_compute_1D_dispatch_dimensions; 
 
         assert(a_shape == out_shape);
         GpuShape gpu_a_shape = GpuShape::from_shape(a_shape);
@@ -753,7 +781,7 @@
         size_t n_dims = out_shape.n_dim;
         size_t n_elements = out_shape.n_elements;
         Gpu1DKernelDimension dims = _compute_1D_dispatch_dimensions(out_shape);
-        LLCN_MATH_KERNELS::log_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
+        Kernels::log_kernel<<<dims.num_blocks_per_grid,dims.num_threads_per_block>>>(
             a,
             gpu_a_shape,
             out,
@@ -774,7 +802,10 @@
         const float* b , Shape b_shape,
         float* out, Shape out_shape
     ) {
-        ;
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        using Kernels::_compute_1D_dispatch_dimensions;
+
         size_t n_dim = out_shape.n_dim;
         size_t M = out_shape[n_dim - 2];
         size_t N = out_shape[n_dim - 1];
@@ -797,7 +828,7 @@
         GpuShape gpu_b_shape = GpuShape::from_shape(b_shape);
         GpuShape gpu_out_shape = GpuShape::from_shape(out_shape);
 
-        LLCN_MATH_KERNELS::matmul_kernel<<<grid, block>>>(
+        Kernels::matmul_kernel<<<grid, block>>>(
             a, gpu_a_shape,
             b, gpu_b_shape,
             out, gpu_out_shape,
@@ -818,6 +849,7 @@
         std::array<size_t,2> strides,
         std::array<size_t,2> padding
     ){
+
         size_t N = in_shape[0], C = in_shape[1], H = in_shape[2], W = in_shape[3];
         size_t H_window = window_shape[0], W_window = window_shape[1];
         size_t H_out = (H + 2 * padding[0] - H_window) / strides[0] + 1;
@@ -830,7 +862,7 @@
         size_t block_size = 256;
         size_t grid_size  = (total + block_size - 1) / block_size;
 
-        LLCN_MATH_KERNELS::im2col2d_kernel<<<grid_size, block_size>>>(
+        Kernels::im2col2d_kernel<<<grid_size, block_size>>>(
             in, out,
             N, C, H, W,
             in_shape._strides[0], in_shape._strides[1],
@@ -875,7 +907,7 @@
         //upstream gradients whenever a Conv2D feeds another layer's backward pass.
         cudaMemset(out, 0, out_shape.n_elements * sizeof(float));
 
-        LLCN_MATH_KERNELS::col2im2d_kernel<<<grid_size, block_size>>>(
+        Kernels::col2im2d_kernel<<<grid_size, block_size>>>(
             in, out,
             N, C, H, W,
             out_shape._strides[0], out_shape._strides[1],
@@ -901,8 +933,11 @@
     void GpuMath::reLU(
         const float* a, float* out, size_t n_elements
     ) {
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        using Kernels::_compute_1D_dispatch_dimensions;
         size_t blocks_per_grid = (n_elements + THREADS_PER_BLOCK - 1 )/THREADS_PER_BLOCK;
-        reLU_kernel<<<blocks_per_grid,THREADS_PER_BLOCK>>>(
+        Kernels::reLU_kernel<<<blocks_per_grid,THREADS_PER_BLOCK>>>(
             a,
             out,
             n_elements
@@ -929,7 +964,10 @@
         float* out,
         Shape out_shape
     ) {
-        ;
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        using Kernels::_compute_1D_dispatch_dimensions;
+
         GpuShape g_a   = GpuShape::from_shape(a_shape);
         GpuShape g_out = GpuShape::from_shape(out_shape);
 
@@ -960,6 +998,9 @@
         size_t axis
     ) {
         ;
+        using Kernels::GpuShape;
+        using Kernels::Gpu1DKernelDimension;
+        using Kernels::_compute_1D_dispatch_dimensions;
         GpuShape g_a   = GpuShape::from_shape(a_shape);
         GpuShape g_out = GpuShape::from_shape(out_shape);
 
@@ -968,7 +1009,7 @@
         size_t block_size = 256;
         size_t grid_size  = (total + block_size - 1) / block_size;
 
-        sum_kernel<<<grid_size, block_size>>>(
+        Kernels::sum_kernel<<<grid_size, block_size>>>(
             a, out,
             g_a, g_out,
             total

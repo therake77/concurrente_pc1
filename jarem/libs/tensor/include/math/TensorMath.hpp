@@ -41,8 +41,8 @@ namespace MyTensors::Math::TensorMath{
 
     //I'm thinking of removing this
     void sum(const Tensor& a, size_t axis, Tensor& out);
+    
+    //Old, deprecated
     Tensor reshape(const Tensor& a, std::array<size_t, TENSOR_MAX_DIM> new_shape);
-    Tensor transpose(const Tensor& a);
-
     
 };

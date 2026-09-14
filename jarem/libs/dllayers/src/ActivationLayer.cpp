@@ -13,6 +13,8 @@ ActivationLayer::ActivationLayer(
     std::shared_ptr<Device> dev 
 ) : type(_type), Layer(dev) {}
 
+using MyTensors::Core::Tensor;
+using MyTensors::Math::TensorMath;
 std::shared_ptr<Tensor> ActivationLayer::forward( const Tensor& in ){
     /*Because all of them share the shape, we can do this*/
     __check_initialization(this->_forward_out,in.shape);
