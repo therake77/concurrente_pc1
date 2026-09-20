@@ -39,9 +39,13 @@ namespace MyTensors::Math::TensorMath{
     void tanh(const Tensor& a, Tensor& out);
     void softmax(const Tensor& a, Tensor& out);
 
-    //I'm thinking of removing this
     void sum(const Tensor& a, size_t axis, Tensor& out);
     
+    void binary_positive_mask(
+        const Tensor& in,
+        Tensor& out
+    );
+
     //Old, deprecated
     Tensor reshape(const Tensor& a, std::array<size_t, TENSOR_MAX_DIM> new_shape);
     

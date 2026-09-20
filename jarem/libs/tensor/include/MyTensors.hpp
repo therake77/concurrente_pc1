@@ -4,3 +4,4 @@
     #include <hardware/GpuDevice.cuh>
 #endif
 #include <math/TensorMath.hpp>
+#include <core/Util.hpp>

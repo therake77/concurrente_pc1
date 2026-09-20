@@ -49,6 +49,13 @@ namespace MyTensors::Math::Base{
         virtual void sigmoid(const float* a, float* out, size_t n_elements) = 0;
         virtual void tanh(const float* a, float* out, size_t n_elements) = 0;
         
+        virtual void binary_positive_mask(
+            const float* in,
+            const Shape& in_shape,
+            float* out,
+            const Shape& out_shape
+        ) = 0;
+
         virtual void softmax(
             const float* a,
             Shape a_shape, 

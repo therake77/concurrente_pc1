@@ -9,7 +9,7 @@ public:
 
     SimpleNetwork(
         std::vector<std::unique_ptr<Layer>>&& _layers
-    ) : layers(_layers) {}
+    ) : layers(std::move(_layers)) {}
 
     const std::shared_ptr<const Tensor> forward(const Tensor& input);
     const std::shared_ptr<const Tensor> forward(const Tensor& input, const Tensor& label);
@@ -49,9 +49,9 @@ public:
     ){
         this->layers.push_back(
             std::make_unique<LayerType>(
-                std::forward<Args>(args);
-            );
-        )
+                std::forward<Args>(args)...
+            )
+        );
         return *this;
     }
 

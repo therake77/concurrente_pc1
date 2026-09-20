@@ -1,6 +1,9 @@
 #include <ConvLayer.hpp>
 #include <MyTensors.hpp>
+#include <cmath>
 #include <cassert>
+
+using namespace MyTensors::Math;
 
 Conv2D::Conv2D(
     std::array<size_t, 4> kernel_shape,
@@ -23,6 +26,7 @@ Conv2D::Conv2D(
  std::shared_ptr<Tensor> Conv2D::forward( const Tensor& in){
     //Compute convolution
     using dim_t = std::size_t;
+    
     dim_t features = _kernels.shape[0];
     dim_t channels = _kernels.shape[1];
     dim_t kernel_height = _kernels.shape[2];

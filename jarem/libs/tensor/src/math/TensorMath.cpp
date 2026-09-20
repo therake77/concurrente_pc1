@@ -94,12 +94,12 @@ namespace{
             a._shapes[TENSOR_MAX_DIM - 2] != out._shapes[TENSOR_MAX_DIM - 2] ||
             b._shapes[TENSOR_MAX_DIM - 1] != out._shapes[TENSOR_MAX_DIM - 1]
         ){
-            throw std::exception("Error: Unexpected shapes. Expected inputs (...,M,K),(...,K,N) and output (...,M,N)");
+            throw std::runtime_error("Error: Unexpected shapes. Expected inputs (...,M,K),(...,K,N) and output (...,M,N)");
         }
         //Now check if the rest of the shapes are equal
         for(size_t i = TENSOR_MAX_DIM - 2; i --> 0;){
-            if(a._shapes[i] != b._shapes[i]){ throw std::exception("Error: Outer dimensions are supposed to be equal. Bad broadcasting"); }
-            if(a._shapes[i] != out._shapes[i]){ throw std::exception("Error: Outer dimensions are supposed to be equal. Bad output expansion"); }
+            if(a._shapes[i] != b._shapes[i]){ throw std::runtime_error("Error: Outer dimensions are supposed to be equal. Bad broadcasting"); }
+            if(a._shapes[i] != out._shapes[i]){ throw std::runtime_error("Error: Outer dimensions are supposed to be equal. Bad output expansion"); }
         }
     }
 
@@ -459,4 +459,23 @@ Tensor TensorMath::reshape(const Tensor& a, std::array<size_t, TENSOR_MAX_DIM> n
         out.data()[i] = a.data()[i];
     }
     return out;
+}
+
+void TensorMath::binary_positive_mask(
+    const Tensor& in,
+    Tensor& out
+){
+    _ensure_same_device(in,out);
+    _ensure_same_shape(in,out);
+
+    auto device = in.getDevice();
+
+    device->math->binary_positive_mask(
+        in.data(),
+        in.shape,
+        out.data(),
+        out.shape
+    );
+    
+    return;
 }

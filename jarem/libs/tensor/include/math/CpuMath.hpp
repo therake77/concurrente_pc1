@@ -56,5 +56,12 @@ namespace MyTensors::Math::Base{
             size_t axis
         ) override;
 
+        void binary_positive_mask(
+            const float* in,
+            const Shape& in_shape,
+            float* out,
+            const Shape& out_shape
+        ) override;
+
     };
 }

@@ -6,6 +6,7 @@ add_library( dllayers
     src/ActivationLayer.cpp
     src/FullyConnected.cpp
     src/ConvLayer.cpp
+    src/OutputLayer.cpp
 )
 
 target_include_directories( dllayers

@@ -547,6 +547,24 @@
             }
         }
 
+        __global__ void binary_positive_mask_kernel(
+            const float* in,
+            float* out,
+            GpuShape in_shape,
+            GpuShape out_shape,
+            size_t total_elements
+        ){
+            size_t thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
+            if(thread_idx >= total_elements) return;
+
+            size_t coords[TENSOR_MAX_DIM];
+            _compute_coords_from_idx(thread_idx, coords, out_shape);
+
+            size_t in_idx  = _compute_idx_from_coords(coords, in_shape);
+            size_t out_idx = _compute_idx_from_coords(coords, out_shape);
+
+            out[out_idx] = in[in_idx] > 0.0f ? 1.0f : 0.0f;
+        }
 
     };
 
@@ -1022,5 +1040,31 @@
         return;
     }
 
+    void GpuMath::binary_positive_mask(
+        const float* in,
+        const Shape& in_shape,
+        float* out,
+        const Shape& out_shape
+    ) {
+        using namespace LLCN_MATH_KERNELS;
+        GpuShape g_in  = GpuShape::from_shape(in_shape);
+        GpuShape g_out = GpuShape::from_shape(out_shape);
 
+        size_t total      = g_out.n_elements;
+        size_t block_size = 256;
+        size_t grid_size  = (total + block_size - 1) / block_size;
+
+        binary_positive_mask_kernel<<<grid_size, block_size>>>(
+            in, out,
+            g_in, g_out,
+            total
+        );
+        
+        auto status_code = cudaDeviceSynchronize();
+        if(status_code != cudaSuccess){
+            throw std::runtime_error("Error: Add kernel execution failed");
+        }
+        return;
+    }
+    
 #endif //__USE_CUDA__

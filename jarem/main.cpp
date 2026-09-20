@@ -5,7 +5,7 @@ int main(){
     using MyTensors::Hardware::Device;
     using MyTensors::Hardware::DeviceManager;
     using MyTensors::Hardware::CpuDevice;
-    auto device = DeviceManager::get_gpu_device();
+    auto device = DeviceManager::get_cpu_device();
     
     //Build the layer
     SimpleNetwork net = SimpleNetworkBuilder(3)
@@ -46,6 +46,10 @@ int main(){
     );
     img_file.close();
     lbl_file.close();
+
+    MyTensors::Util::tensor_print(data);
+    MyTensors::Util::tensor_print(labels);
+    return 0;
 
 
 }

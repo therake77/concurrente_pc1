@@ -1,5 +1,4 @@
-
-
+#pragma once
 #include <memory>
 #include <vector>
 #include <initializer_list>
@@ -45,6 +44,7 @@ namespace MyTensors::Core{
         void outer_expand(std::size_t dims);
         void contiguous();
     };
+
 }
     
 
