@@ -23,13 +23,13 @@ const std::shared_ptr<const Tensor> SimpleNetwork::forward(const Tensor& input, 
             //Feed the first layer
             this->layers[0]->forward(input);
             for(std::size_t i = 1 ; i < this->layers.size()-1; i++){
-                this->layers[0]->forward(
+                this->layers[i]->forward(
                     *(this->layers[i-1]->_forward_out)
                 );
             }
             if(this->layers.size() > 1){
                 auto& last_layer = dynamic_cast<OutputLayer&>(*(this->layers[this->layers.size()-1]));
-            
+
                 last_layer.forward(
                     *(this->layers[this->layers.size() - 2 ]->_forward_out),
                     label
@@ -43,7 +43,7 @@ const std::shared_ptr<const Tensor> SimpleNetwork::forward(const Tensor& input, 
 }
 
 const std::shared_ptr<const Tensor> SimpleNetwork::backwards(const Tensor& label, const Tensor& input){
-    
+
     std::size_t n_layers = this->layers.size();
     if(n_layers > 0){
         //Feed the last layer
@@ -76,7 +76,14 @@ void SimpleNetwork::update_weights(float lr){
 }
 
 void SimpleNetwork::set_mode(LayerMode mode){
+    this->mode = mode;
     for(std::size_t i = 0; i < this->layers.size(); i++){
         this->layers[i]->set_mode(mode);
+    }
+}
+
+void SimpleNetwork::he_initialize_all(){
+    for(std::size_t i = 0; i < this->layers.size(); i++){
+        this->layers[i]->he_initialization();
     }
 }

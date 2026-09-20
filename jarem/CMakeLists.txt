@@ -10,6 +10,10 @@ SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/EHsc>)
+endif()
+
 include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
@@ -38,25 +42,49 @@ target_include_directories(
 )
 
 add_executable(
-    main
+    main_mlp
     main.cpp
     src/SimpleNetwork.cpp
 )
 
+add_executable(
+    main_cnn
+    main2.cpp
+    src/SimpleNetwork.cpp
+)
+
 target_include_directories(
-    main
+    main_mlp
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_link_libraries(
-    main
+    main_mlp
     PRIVATE
     MyTensors::MyTensors   
 )
 
 target_link_libraries(
-    main
+    main_mlp
+    PRIVATE
+    DLLib::DLLib
+)
+
+target_include_directories(
+    main_cnn
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(
+    main_cnn
+    PRIVATE
+    MyTensors::MyTensors   
+)
+
+target_link_libraries(
+    main_cnn
     PRIVATE
     DLLib::DLLib
 )

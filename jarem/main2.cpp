@@ -1,3 +1,5 @@
+// CNN demo
+
 #include <SimpleNetwork.hpp>
 #include <fstream>
 #include <string>
@@ -8,7 +10,6 @@
 using MyTensors::Core::Tensor;
 using MyTensors::Core::TENSOR_MAX_DIM;
 
-//Digits used: see scripts/mnist_script.py (DIGIT_A -> class 0, DIGIT_B -> class 1)
 constexpr std::size_t IMG_PIXELS = 28 * 28;
 constexpr std::size_t N_CLASSES = 2;
 
@@ -44,46 +45,31 @@ int main(){
 
     //Flatten -> FC(784,32) -> ReLU -> FC(32,2) -> OutputLayer(2)
     SimpleNetwork net = SimpleNetworkBuilder(5)
-        .with_layer<
-            Flatten
-        >(
-            device
+        .with_layer<Conv2D>(
+            std::array<std::size_t,4> {8,1,3,3},    //Outputr channel: 8, One channel, Kernel 3x3
+            device,
+            std::array<std::size_t,2> {0,0},    //No padding
+            std::array<std::size_t,2> {1,1}     //Stride of 1
         )
-        .with_layer<
-            FullyConnected,
-            std::array<std::size_t, TENSOR_MAX_DIM>
-        >(
-            {IMG_PIXELS,32},
-            device
-        )
-        .with_layer<
-            ActivationLayer
-        >(
+        .with_layer<ActivationLayer>(
             ActivationTypes::ReLU,
             device
         )
-        .with_layer<
-            FullyConnected,
-            std::array<std::size_t, TENSOR_MAX_DIM>
-        >(
-            {32,N_CLASSES},
+        .with_layer<Flatten>(device)
+        .with_layer<FullyConnected>(
+            std::array<std::size_t,MyTensors::Core::TENSOR_MAX_DIM>{8*26*26,2},
             device
         )
-        .with_layer<
-            OutputLayer
-        >(
-            device,
-            N_CLASSES
-        )
+        .with_layer<OutputLayer>(device,N_CLASSES)
         .build();
-
+        
     net.he_initialize_all();
 
     constexpr std::size_t BATCH_SIZE = 50;
     constexpr std::size_t EPOCHS = 15;
     constexpr float LEARNING_RATE = 0.1f;
     const std::size_t n_batches = train_n / BATCH_SIZE;
-    Tensor batch_images({BATCH_SIZE,28,28},device);
+    Tensor batch_images({BATCH_SIZE,1,28,28},device);
     Tensor batch_labels({BATCH_SIZE,N_CLASSES},device);
 
     net.set_mode(LayerMode::Training);
@@ -116,20 +102,21 @@ int main(){
     //Inference test on the held-out test set
     net.set_mode(LayerMode::Inference);
 
-    Tensor test_batch_images({test_n,28,28},device);
+    Tensor test_batch_images({test_n,1,28,28},device);
     test_batch_images.copy_from(test_images_flat.data(), test_n * IMG_PIXELS);
 
     const Tensor& probs = *(net.forward(test_batch_images));
     const float* probs_data = probs.data();
-
-    MyTensors::Util::tensor_print(probs);
 
     std::size_t correct = 0;
     for(std::size_t i = 0; i < test_n; i++){
         float p0 = probs_data[i * N_CLASSES + 0];
         float p1 = probs_data[i * N_CLASSES + 1];
         std::size_t predicted = (p1 > p0) ? 1 : 0;
+        std::cout<<"Predicted "<<predicted;
         std::size_t truth = (test_labels_flat[i * N_CLASSES + 1] > 0.5f) ? 1 : 0;
+        std::cout<<" Truth "<<truth<<std::endl;
+
         if(predicted == truth){ correct++; }
     }
 

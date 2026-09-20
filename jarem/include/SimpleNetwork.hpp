@@ -29,6 +29,7 @@ public:
 
     void update_weights(float lr);
     void set_mode(LayerMode mode);
+    void he_initialize_all();
 
 };
 

@@ -10,6 +10,7 @@
     namespace MyTensors::Math::Base::Kernels{
         using MyTensors::Core::Shape;
         using MyTensors::Core::TENSOR_MAX_DIM;
+
         struct GpuShape{
             size_t shapes[TENSOR_MAX_DIM];
             size_t strides[TENSOR_MAX_DIM];
@@ -1046,7 +1047,8 @@
         float* out,
         const Shape& out_shape
     ) {
-        using namespace LLCN_MATH_KERNELS;
+        using MyTensors::Math::Base::Kernels::binary_positive_mask_kernel;
+        using MyTensors::Math::Base::Kernels::GpuShape;
         GpuShape g_in  = GpuShape::from_shape(in_shape);
         GpuShape g_out = GpuShape::from_shape(out_shape);
 

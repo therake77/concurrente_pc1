@@ -1,11 +1,12 @@
 #pragma once
 #include <core/Tensor.hpp>
 #include <iostream>
+#include <iomanip>
 
 namespace MyTensors::Util{
     using MyTensors::Core::Tensor;
 
-    inline void tensor_print(Tensor& a){
+    inline void tensor_print(const Tensor& a){
         const float* data = a.data();
         std::vector<std::size_t> coords(a.shape.n_dim,0);
         for(std::size_t i = 0; i < a.shape.n_dim; ++i){
@@ -16,7 +17,7 @@ namespace MyTensors::Util{
             for (std::size_t i = 0; i < a.shape.n_dim; ++i){
                 flat_idx+=coords[i] * a.shape._strides[i];
             }
-            std::cout << data[flat_idx];
+            std::cout << std::fixed << std::setprecision(2) << data[flat_idx];
             bool finished = false;
             std::size_t reset = 0;
             for(std::size_t i = a.shape.n_dim; i --> 0; ){

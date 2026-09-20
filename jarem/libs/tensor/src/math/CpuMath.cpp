@@ -746,7 +746,7 @@ void CpuMath::binary_positive_mask(
     do{
         std::size_t in_idx = _compute_idx_from_coords(coords,in_shape._strides);
         std::size_t out_idx = _compute_idx_from_coords(coords,out_shape._strides);
-        out[out_idx] = in[in_idx] > 0 ? 1 : 0;
+        out[out_idx] = in[in_idx] > 0 ? 1.0 : 0.0;
     }while(_increment_odometer(coords,out_shape._shapes));
 }
 
