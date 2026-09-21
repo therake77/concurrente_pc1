@@ -1,11 +1,19 @@
 #pragma once
 #include <math/Math.hpp>
+#include <hardware/ThreadPool.hpp>
 
-namespace MyTensors::Math::Base{    
+namespace MyTensors::Math::Base{
+    
+    using MyTensors::Hardware::ThreadPool;
+
     class CpuMath : public Math{
+    
+    private:
+        std::shared_ptr<ThreadPool> pool;
     public:
         ~CpuMath() override = default;
-        CpuMath() = default;
+        CpuMath() = delete;
+        CpuMath(std::shared_ptr<ThreadPool> _pool) : pool(_pool) {}
 
         void add(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) override;
         void sub(const float* a,  Shape a_shape, const float* b, Shape b_shape, float* out, Shape out_shape) override;

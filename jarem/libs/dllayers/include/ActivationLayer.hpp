@@ -13,8 +13,8 @@ private:
 public:
 
     ActivationLayer(
-        ActivationTypes = ActivationTypes::ReLU,
-        std::shared_ptr<Device> = MyTensors::Hardware::DeviceManager::get_cpu_device()
+        std::shared_ptr<Device>,
+        ActivationTypes = ActivationTypes::ReLU
     );
 
     std::shared_ptr<Tensor> forward( const Tensor& ) override;

@@ -5,7 +5,9 @@
 namespace MyTensors::Hardware{
     class DeviceManager {
     public:
-        static std::shared_ptr<Device> get_cpu_device();
+        static std::shared_ptr<Device> get_cpu_device(
+            std::shared_ptr<ThreadPool> pool
+        );
         static std::shared_ptr<Device> get_gpu_device();
     };
 }

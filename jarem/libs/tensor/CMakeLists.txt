@@ -6,6 +6,7 @@ add_library( tensor
     src/core/Tensor.cpp
     src/hardware/CpuDevice.cpp
     src/hardware/DeviceManager.cpp
+    src/hardware/ThreadPool.cpp
     src/math/CpuMath.cpp
     src/math/TensorMath.cpp
 )

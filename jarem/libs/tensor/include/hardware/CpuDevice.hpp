@@ -1,14 +1,19 @@
 #pragma once
 #include <hardware/Device.hpp>
+#include <hardware/ThreadPool.hpp>
 #include <math/CpuMath.hpp>
 
 
 namespace MyTensors::Hardware{
     class CpuDevice : public Device {
+    private:
+        std::shared_ptr<ThreadPool> pool;
     public:
         ~CpuDevice() override = default;
 
-        CpuDevice(){ this->math = std::make_unique<MyTensors::Math::Base::CpuMath>(); };
+        CpuDevice(std::shared_ptr<ThreadPool> _pool) : pool(_pool) { 
+            this->math = std::make_unique<MyTensors::Math::Base::CpuMath>(this->pool); 
+        };
 
         /*
             @brief Allocates `_bytes` bytes in memory

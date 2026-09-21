@@ -53,6 +53,12 @@ add_executable(
     src/SimpleNetwork.cpp
 )
 
+add_executable(
+    test
+    tests.cpp
+)
+
+
 target_include_directories(
     main_mlp
     PRIVATE
@@ -87,4 +93,12 @@ target_link_libraries(
     main_cnn
     PRIVATE
     DLLib::DLLib
+)
+
+
+
+target_link_libraries(
+    test
+    PRIVATE
+    MyTensors::MyTensors
 )

@@ -9,8 +9,8 @@ namespace{
 };
 
 ActivationLayer::ActivationLayer(
-    ActivationTypes _type,
-    std::shared_ptr<Device> dev 
+    std::shared_ptr<Device> dev,
+    ActivationTypes _type
 ) : type(_type), Layer(dev) {}
 
 using MyTensors::Core::Tensor;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 using MyTensors::Core::Tensor;
 using MyTensors::Core::TENSOR_MAX_DIM;
@@ -29,7 +30,9 @@ std::vector<float> read_all_floats(const std::string& path){
 int main(){
     using MyTensors::Hardware::Device;
     using MyTensors::Hardware::DeviceManager;
-    auto device = DeviceManager::get_cpu_device();
+    using MyTensors::Hardware::ThreadPool;
+    auto pool = std::make_shared<ThreadPool>(std::thread::hardware_concurrency());
+    auto device = DeviceManager::get_cpu_device(pool);
 
     std::vector<float> train_images_flat = read_all_floats(".\\temp\\mnist_train_images_f32.bin");
     std::vector<float> train_labels_flat = read_all_floats(".\\temp\\mnist_train_labels_onehot_f32.bin");
@@ -52,8 +55,8 @@ int main(){
             std::array<std::size_t,2> {1,1}     //Stride of 1
         )
         .with_layer<ActivationLayer>(
-            ActivationTypes::ReLU,
-            device
+            device,
+            ActivationTypes::ReLU
         )
         .with_layer<Flatten>(device)
         .with_layer<FullyConnected>(
