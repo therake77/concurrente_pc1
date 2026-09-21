@@ -1,0 +1,4 @@
+[submodule "piero/SampleRepo"]
+	path = piero/SampleRepo
+	url = https://github.com/PieroCastillo/Lettuce.git
+	branch = finite-elements
