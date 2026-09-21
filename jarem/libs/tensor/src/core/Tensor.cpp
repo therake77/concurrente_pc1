@@ -221,33 +221,26 @@ void Tensor::reshape(std::array<std::size_t, TENSOR_MAX_DIM> new_shape) {
 }
 
 void Tensor::copy_from(const Tensor& t){
-    if(this->device->get_type() != t.device->get_type()){
-        throw std::runtime_error("Error: Different devices not allowed");
-    }
+    
     if( this->shape.n_elements != t.shape.n_elements){
         throw std::runtime_error("Error: Dangerous copy");
     }
-
     std::size_t total_bytes = this->shape.n_elements * sizeof(float);
-    auto dev = this->device;
-    switch(dev->get_type()){
-        case DeviceType::CPU:
-            dev->copy_device_to_device(
-                this->cpu_data.get(),
-                t.cpu_data.get(),
-                total_bytes
-            );
-            break;
-        case DeviceType::GPU:
-            dev->copy_device_to_device(
-                this->gpu_data.get(),
-                t.gpu_data.get(),
-                total_bytes
-            );
-            break;
-        default:
-            throw std::runtime_error("Device not recognized");
-            break;
+    auto data_ptr = this->data();
+
+    auto src_type = t.getDevice().get()->get_type();
+    auto dst_type = this->device->get_type();
+
+    if(src_type == dst_type){
+        this->device->copy_device_to_device(data_ptr,t.data(), total_bytes);
+    }else if(src_type == DeviceType::GPU){
+        // This device is CPU and the source device is GPU
+        // Then, copy from GPU to CPU
+        t.getDevice()->copy_to_host(data_ptr,t.data(),total_bytes);
+    }else{
+        // This device is GPU and the source device is CPU
+        // Then, copy from CPU to GPU using the GPU device (this)
+        this->device->copy_to_device(data_ptr,t.data(),total_bytes);
     }
 
 }

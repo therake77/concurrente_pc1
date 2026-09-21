@@ -27,12 +27,33 @@ std::vector<float> read_all_floats(const std::string& path){
     return buffer;
 }
 
-int main(){
+int main( int argc, char* argv[] ){
+
+    unsigned int n_threads = std::thread::hardware_concurrency();
+    bool use_cpu = true;
+
+    for(int i = 1; i < argc; i++){
+        std::string arg = argv[i];
+        if(arg == "--use-gpu"){
+            use_cpu = false;
+        }else if(arg == "--thread"){
+            if(i + 1 >= argc){ throw std::runtime_error("Error: --thread requires a number"); }
+            n_threads = static_cast<unsigned int>(std::stoul(argv[++i]));
+        }
+    }
+
     using MyTensors::Hardware::Device;
     using MyTensors::Hardware::DeviceManager;
     using MyTensors::Hardware::ThreadPool;
-    auto pool = std::make_shared<ThreadPool>(std::thread::hardware_concurrency());
-    auto device = DeviceManager::get_cpu_device(pool);
+
+    std::shared_ptr<Device> device;
+    if(use_cpu){
+        auto pool = std::make_shared<ThreadPool>(n_threads);
+        device = DeviceManager::get_cpu_device(pool);
+    }else{
+        device = DeviceManager::get_gpu_device();
+    }
+    
 
     std::vector<float> train_images_flat = read_all_floats(".\\temp\\mnist_train_images_f32.bin");
     std::vector<float> train_labels_flat = read_all_floats(".\\temp\\mnist_train_labels_onehot_f32.bin");
@@ -46,7 +67,7 @@ int main(){
     const std::size_t train_n = train_images_flat.size() / IMG_PIXELS;
     const std::size_t test_n  = test_images_flat.size() / IMG_PIXELS;
 
-    //Flatten -> FC(784,32) -> ReLU -> FC(32,2) -> OutputLayer(2)
+    //Conv2D -> ReLU -> Flatten -> FC -> Softmax+CrossEntropy
     SimpleNetwork net = SimpleNetworkBuilder(5)
         .with_layer<Conv2D>(
             std::array<std::size_t,4> {8,1,3,3},    //Outputr channel: 8, One channel, Kernel 3x3
@@ -72,10 +93,25 @@ int main(){
     constexpr std::size_t EPOCHS = 15;
     constexpr float LEARNING_RATE = 0.1f;
     const std::size_t n_batches = train_n / BATCH_SIZE;
+
+    //Set up the tensor of losses, which always uses a cpu device
+    std::shared_ptr<Device> dev_2;
+    if(use_cpu){
+        dev_2 = device;
+    }else{
+        auto pool = std::make_shared<ThreadPool>(2);
+        dev_2 = DeviceManager::get_cpu_device(pool);
+    }
+    Tensor losses = Tensor({BATCH_SIZE},dev_2);
+
     Tensor batch_images({BATCH_SIZE,1,28,28},device);
     Tensor batch_labels({BATCH_SIZE,N_CLASSES},device);
-
+    
+    //Training with stochastic gradient descent
     net.set_mode(LayerMode::Training);
+    //Measuring time
+    std::cout<<"Starting training ..."<<std::endl;
+    auto training_start = std::chrono::steady_clock::now();
 
     for(std::size_t epoch = 0; epoch < EPOCHS; epoch++){
         float epoch_loss = 0.0f;
@@ -87,8 +123,9 @@ int main(){
             batch_images.copy_from(img_ptr, BATCH_SIZE * IMG_PIXELS);
             batch_labels.copy_from(lbl_ptr, BATCH_SIZE * N_CLASSES);
 
-            const Tensor& losses = *(net.forward(batch_images,batch_labels));
-
+            const Tensor& net_output = *(net.forward(batch_images,batch_labels));
+            losses.copy_from(net_output);
+            
             const float* loss_data = losses.data();
             float batch_loss = 0.0f;
             for(std::size_t i = 0; i < BATCH_SIZE; i++){ batch_loss += loss_data[i]; }
@@ -102,13 +139,33 @@ int main(){
         std::cout << "Epoch " << (epoch + 1) << "/" << EPOCHS << " - avg loss: " << epoch_loss << std::endl;
     }
 
+    auto training_end = std::chrono::steady_clock::now();
+    auto training_elapsed = training_end - training_start;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(training_elapsed);
+    std::cout<<" Training finished in "<<ms.count()<<" miliseconds"<<std::endl;
+    
+    //---------------------------------------------------------------------------------------
+    
+
     //Inference test on the held-out test set
     net.set_mode(LayerMode::Inference);
 
     Tensor test_batch_images({test_n,1,28,28},device);
     test_batch_images.copy_from(test_images_flat.data(), test_n * IMG_PIXELS);
 
-    const Tensor& probs = *(net.forward(test_batch_images));
+    //Starting inference
+    std::cout<<"Starting inference..."<<std::endl;
+    auto inference_start = std::chrono::steady_clock::now();
+    
+    const Tensor& inf_out = *(net.forward(test_batch_images));
+    
+    auto inference_end = std::chrono::steady_clock::now();
+    auto inference_elapsed = inference_end - inference_start;
+    auto inference_ms = std::chrono::duration_cast<std::chrono::milliseconds>(inference_elapsed);
+    std::cout<<" Inference of "<<test_n<<" images took "<<inference_ms.count()<<" miliseconds"<<std::endl;
+
+    //Copy the results to a new tensor that is always on cpu
+    Tensor probs = Tensor(inf_out,dev_2);
     const float* probs_data = probs.data();
 
     std::size_t correct = 0;
@@ -116,10 +173,7 @@ int main(){
         float p0 = probs_data[i * N_CLASSES + 0];
         float p1 = probs_data[i * N_CLASSES + 1];
         std::size_t predicted = (p1 > p0) ? 1 : 0;
-        std::cout<<"Predicted "<<predicted;
         std::size_t truth = (test_labels_flat[i * N_CLASSES + 1] > 0.5f) ? 1 : 0;
-        std::cout<<" Truth "<<truth<<std::endl;
-
         if(predicted == truth){ correct++; }
     }
 
