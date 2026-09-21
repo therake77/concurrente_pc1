@@ -1,4 +1,4 @@
-Código de la Práctica 1 del curso Programación Concurrente y Distribuida
+# Práctica 1 - CC4P1
 
 El código de la carpeta ```piero``` contiene git submodules, así que al clonar este repositorio usar:
 ```shell
