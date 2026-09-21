@@ -34,6 +34,7 @@ namespace{
         if(s.n_dim != expected){ throw std::runtime_error("Error: Unexpected number of dimensions"); }
     }
 
+
 };
 
 using namespace MyTensors::Math;

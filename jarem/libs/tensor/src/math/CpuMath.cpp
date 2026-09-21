@@ -594,6 +594,105 @@ namespace MyTensors::Math::Base::Routines{
         }
     }
 
+    void elementwise_relu(
+        std::size_t thread_idx, std::size_t scope,
+        const float* a, float* out, size_t n_elements
+    ){
+        std::size_t global_idx = thread_idx * scope;
+
+        for(std::size_t i = 0; i < scope; i++){
+            std::size_t idx = global_idx + i;
+            if(idx >= n_elements){ break; }
+            out[idx] = std::max(a[idx],0.0f);
+        }
+    }
+
+    void elementwise_sigmoid(
+        std::size_t thread_idx, std::size_t scope,
+        const float* a, float* out, size_t n_elements
+    ){
+        std::size_t global_idx = thread_idx * scope;
+        for(std::size_t i = 0; i < scope; i++){
+            std::size_t idx = global_idx + i;
+            if(idx >= n_elements){ break; }
+
+            if(a[idx] >= 0.0f){
+                out[idx] = 1/(1+std::exp(-a[idx]));
+            }else{
+                float temp = std::exp(a[idx]);
+                out[i] = temp/(1+temp);
+            }
+        }
+    }
+
+    void elementwise_tanh(
+        std::size_t thread_idx, std::size_t scope,
+        const float* a, float* out, size_t n_elements
+    ){
+        std::size_t global_idx = thread_idx * scope;
+        for(std::size_t i = 0; i < scope; i++){
+            std::size_t idx = global_idx + i;
+            if(idx >= n_elements){ break; }
+
+            out[idx] = std::tanh(a[idx]);
+        }
+    }
+
+    void softmax2D(
+        std::size_t thread_idx, std::size_t num_rows,
+        const float* a,
+        Shape a_shape, 
+        float* out,
+        Shape out_shape
+    ){
+        std::size_t row_dim = a_shape.n_dim == 2 ? a_shape._shapes[0] : 1;
+        std::size_t col_dim = a_shape.n_dim == 2 ? a_shape._shapes[1] : a_shape._shapes[0];
+        std::size_t base_row_idx = thread_idx * num_rows;
+        for(std::size_t i = 0; i < num_rows; i++){
+            std::size_t row_idx = base_row_idx + i;
+            if(row_idx >= row_dim){ break; }
+            //If is a valid row
+            const float* a_row = a + row_idx*col_dim;
+            float* out_row = out + row_idx*col_dim;
+            //First, find max
+            float max = std::numeric_limits<float>::min();
+            for(std::size_t col = 0; col < col_dim; col++){
+                if(a_row[col] > max  ){ max = a_row[col]; }
+            }
+            //Perform trick exponentation
+            float sum = 0.0f;
+            for(std::size_t col = 0; col < col_dim; col++){
+                float value = std::exp(a_row[col] - max);
+                out_row[col] = value;
+                sum+=value;
+            }
+            //Normalize
+            for(std::size_t col = 0; col < col_dim; col++){
+                out_row[col] /= sum;
+            }
+
+        }
+        return;
+    }
+
+    void sum_along_axis(
+        std::size_t thread_idx, std::size_t scope,
+        const float* a, Shape a_shape, 
+        float* out, Shape out_shape
+    ){
+        //out_shape is broadcasted by tensormath. so this should be easy
+        std::size_t base_idx = thread_idx * scope;
+        std::array<std::size_t,TENSOR_MAX_DIM> out_coords;
+
+        _compute_coords_from_idx(base_idx,out_shape,out_coords);
+
+        for(std::size_t i = 0; i < scope; i++){
+
+
+        }
+        
+    }
+
 };
 
 
@@ -953,9 +1052,16 @@ void CpuMath::col2im2d(
     @note This method can safely accept that `a` points to the same container as `out`
 */
 void CpuMath::reLU(const float* a, float* out, size_t n_elements) {
-    for(size_t i = 0; i < n_elements; i++){
-        out[i] = std::max(a[i],0.0f);
-    }
+    this->pool->reset();
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (n_elements + n_threads - 1) / n_threads;
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to(
+            i, &Routines::elementwise_relu,
+            i,scope,a,out,n_elements
+        );
+    };
+    this->pool->synchronize();
 }
 
 /*
@@ -968,14 +1074,16 @@ void CpuMath::reLU(const float* a, float* out, size_t n_elements) {
     @note This method can safely accept that `a` points to the same container as `out`
 */
 void CpuMath::sigmoid(const float* a, float* out, size_t n_elements) {
-    for(size_t i = 0; i < n_elements; i++){
-        if(a[i] >= 0.0f){
-            out[i] = 1/(1+std::exp(-a[i]));
-        }else{
-            float temp = std::exp(a[i]);
-            out[i] = temp/(1+temp);
-        }
-    }
+    this->pool->reset();
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (n_elements + n_threads - 1) / n_threads;
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to(
+            i, &Routines::elementwise_sigmoid,
+            i,scope,a,out,n_elements
+        );
+    };
+    this->pool->synchronize();
 }
 
 /*
@@ -988,9 +1096,16 @@ void CpuMath::sigmoid(const float* a, float* out, size_t n_elements) {
     @note This method can safely accept that `a` points to the same container as `out`
 */
 void CpuMath::tanh(const float* a, float* out, size_t n_elements) {
-    for(size_t i = 0; i < n_elements; i++){
-        out[i] = std::tanh(a[i]);
-    }
+    this->pool->reset();
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (n_elements + n_threads - 1) / n_threads;
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to(
+            i, &Routines::elementwise_tanh,
+            i,scope,a,out,n_elements
+        );
+    };
+    this->pool->synchronize();
 }
 
 /*
@@ -1009,75 +1124,21 @@ void CpuMath::softmax(
     float* out,
     Shape out_shape
 ) {
-    assert(out_shape == a_shape);
-    if(a_shape.n_dim == 2 && _is_contiguous(a_shape) && _is_contiguous(out_shape)){
-        std::size_t rows = a_shape[0];
-        std::size_t cols = a_shape[1];
+    this->pool->reset();
+    std::size_t n_rows = a_shape.n_dim == 2 ? a_shape._shapes[0] : 1;
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (n_rows + n_threads - 1) / n_threads;
 
-        for(std::size_t row = 0; row < rows; ++row){
-            const float* a_row = a + row * cols;
-            float* out_row = out + row * cols;
-            float max = std::numeric_limits<float>::lowest();
-
-            for(std::size_t col = 0; col < cols; ++col){
-                if(a_row[col] > max){
-                    max = a_row[col];
-                }
-            }
-
-            float sum = 0.0f;
-            for(std::size_t col = 0; col < cols; ++col){
-                float value = std::exp(a_row[col] - max);
-                out_row[col] = value;
-                sum += value;
-            }
-
-            for(std::size_t col = 0; col < cols; ++col){
-                out_row[col] /= sum;
-            }
-        }
-        return;
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to(
+            i,&Routines::softmax2D,
+            i,scope,
+            a, a_shape,
+            out, out_shape
+        );
     }
 
-    std::vector<std::size_t> out_coords(out_shape.n_dim,0);
-    std::size_t last_dim = out_shape._shapes[out_shape.n_dim-1];
-    std::size_t a_last_stride = a_shape._strides[out_shape.n_dim-1];
-    std::size_t out_last_stride = out_shape._strides[out_shape.n_dim-1];
-
-    do{
-        if(out_coords[out_shape.n_dim-1] == 0){
-            std::size_t a_base_idx = _compute_idx_from_coords(
-                out_coords,
-                a_shape._strides
-            );
-
-            std::size_t out_base_idx = _compute_idx_from_coords(
-                out_coords,
-                out_shape._strides
-            );
-
-            float sum = 0;
-            float max = std::numeric_limits<float>::lowest();
-            //First, find the maximum element
-            for(std::size_t i = 0; i < last_dim; i++){
-                std::size_t a_global_idx = a_base_idx + i * a_last_stride;
-                if(a[a_global_idx] > max) max = a[a_global_idx]; 
-            }
-            //Now, compute e^{x - max}
-            for(std::size_t i = 0; i < last_dim; i++){
-                std::size_t a_global_idx = a_base_idx + i * a_last_stride;
-                std::size_t out_global_idx = out_base_idx + i * out_last_stride;
-                float num = std::exp(a[a_global_idx] - max);
-                out[out_global_idx] = num; 
-                sum +=  num;
-            }
-            //Divide by the accumulated sum
-            for(std::size_t i = 0; i < last_dim; i++){
-                std::size_t out_global_idx = out_base_idx + i * out_last_stride;
-                out[out_global_idx] /= sum; 
-            }
-        }
-    }while(_increment_odometer(out_coords,out_shape._shapes));
+    this->pool->synchronize();
     return;
 }
 
