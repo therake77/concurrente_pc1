@@ -48,6 +48,7 @@ int main( int argc, char* argv[] ){
 
     std::shared_ptr<Device> device;
     if(use_cpu){
+        std::cout<<"Creating a pool of "<<n_threads<<" threads"<<std::endl;
         auto pool = std::make_shared<ThreadPool>(n_threads);
         device = DeviceManager::get_cpu_device(pool);
     }else{

@@ -472,23 +472,33 @@
         }
 
         
+
         __global__ void sum_kernel(
             const float* a,
             float* out,
             GpuShape a_shape,
             GpuShape out_shape,
-            size_t total_elements
+            size_t axis
         ){
             size_t thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
-            if(thread_idx >= total_elements) return;
+            if(thread_idx >= out_shape.n_elements) return;
+            size_t axis_dim = a_shape[axis];
+            size_t suffix = 1;
+            for(size_t k = out_shape.n_dim; k --> axis+1;){
+                suffix*=out_shape[k];
+            }
 
-            size_t coords[TENSOR_MAX_DIM];
-            _compute_coords_from_idx(thread_idx, coords, a_shape);
+            std::size_t low = thread_idx % suffix;
+            std::size_t high = thread_idx/ suffix;
+            size_t a_idx = high * axis_dim * suffix + low;
 
-            size_t a_idx   = _compute_idx_from_coords(coords, a_shape);
-            size_t out_idx = _compute_idx_from_coords(coords, out_shape);
-
-            atomicAdd(&out[out_idx], a[a_idx]);
+            float acc = 0.0;    
+            for(size_t i = 0; i < axis_dim; i++){
+                size_t a_k_idx = a_idx + i*a_shape.strides[axis];    
+                acc+=a[a_k_idx];
+            }
+            out[thread_idx] = acc;
+            return;
         }
 
 
@@ -1023,15 +1033,14 @@
         GpuShape g_a   = GpuShape::from_shape(a_shape);
         GpuShape g_out = GpuShape::from_shape(out_shape);
 
-        size_t total = g_a.n_elements;
-
-        size_t block_size = 256;
+        size_t total = g_out.n_elements;
+        size_t block_size = THREADS_PER_BLOCK;
         size_t grid_size  = (total + block_size - 1) / block_size;
 
         Kernels::sum_kernel<<<grid_size, block_size>>>(
             a, out,
             g_a, g_out,
-            total
+            axis
         );
 
         auto status_code = cudaDeviceSynchronize();

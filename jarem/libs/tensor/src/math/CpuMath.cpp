@@ -678,20 +678,56 @@ namespace MyTensors::Math::Base::Routines{
     void sum_along_axis(
         std::size_t thread_idx, std::size_t scope,
         const float* a, Shape a_shape, 
-        float* out, Shape out_shape
+        float* out, Shape out_shape,
+        std::size_t axis
     ){
-        //out_shape is broadcasted by tensormath. so this should be easy
         std::size_t base_idx = thread_idx * scope;
-        std::array<std::size_t,TENSOR_MAX_DIM> out_coords;
+        std::size_t axis_dim = a_shape[axis];
+        
+        //Compute the suffix
+        std::size_t suffix = 1;
+        for(std::size_t k = a_shape.n_dim; k --> axis+1; ){
+            suffix*=a_shape[k];
+        }
 
-        _compute_coords_from_idx(base_idx,out_shape,out_coords);
-
+        
         for(std::size_t i = 0; i < scope; i++){
-
-
+            std::size_t idx = base_idx + i;
+            if(idx >= out_shape.n_elements){ break; }
+            //Compute a_idx. remember idx = high * suffix + low, and suffix is the product of any shape tuple containing the innermost dimensions
+            std::size_t low = idx % suffix;
+            std::size_t high = idx / suffix;
+            std::size_t a_idx = high * axis_dim * suffix + low; 
+            
+            float acc = 0.0f;
+            for(std::size_t i = 0; i < axis_dim; i++){
+                std::size_t a_axis_idx = a_idx + i * a_shape._strides[axis];
+                acc+=a[a_axis_idx];
+            }
+            out[idx] = acc;
         }
         
     }
+
+    void binary_positive_mask(
+        std::size_t thread_idx, std::size_t scope, std::size_t n_elements,
+        const float* in,
+        const Shape& in_shape,
+        float* out,
+        const Shape& out_shape
+    ){
+        std::size_t base_idx = thread_idx * scope;
+        std::array<std::size_t, TENSOR_MAX_DIM> out_coords { 0 };
+
+        for(std::size_t i = 0; i < scope; i++){
+            std::size_t idx = base_idx + i;
+            if( idx >=  n_elements){ break; }
+            out[idx] = in[idx] > 0? 1.0f : 0.0f;
+        }
+
+        return;
+    }
+
 
 };
 
@@ -1143,28 +1179,28 @@ void CpuMath::softmax(
 }
 
 /*
-    @brief Sum two tensors along a specified axis
-    @note Out should be zeroed before invoking this routine
+    @brief Sum a tensor along a specific axis
 */
 void CpuMath::sum(
     const float* a, Shape a_shape, 
     float* out, Shape out_shape ,
     size_t axis
 ) {
-    assert(a_shape == out_shape);
-    std::size_t axis_dim = a_shape[axis];
-    std::vector<std::size_t> coords(a_shape.n_dim,0);
-    do{
-        std::size_t a_idx = _compute_idx_from_coords(
-            coords,
-            a_shape._strides
+    this->pool->reset();
+
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (out_shape.n_elements + n_threads - 1) / n_threads;
+
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to( 
+            i, &Routines::sum_along_axis,
+            i, scope, a, a_shape,
+            out, out_shape,
+            axis
         );
-        std::size_t out_idx = _compute_idx_from_coords(
-            coords,
-            out_shape._strides
-        );
-        out[out_idx] += a[a_idx];
-    }while(_increment_odometer(coords,a_shape._shapes));
+    }
+
+    this->pool->synchronize();
 }
 
 /*
@@ -1176,12 +1212,22 @@ void CpuMath::binary_positive_mask(
     float* out,
     const Shape& out_shape
 ){
-    //Iterate both tensors using a unique odometer
-    std::vector<std::size_t> coords(out_shape.n_dim,0);
-    do{
-        std::size_t in_idx = _compute_idx_from_coords(coords,in_shape._strides);
-        std::size_t out_idx = _compute_idx_from_coords(coords,out_shape._strides);
-        out[out_idx] = in[in_idx] > 0 ? 1.0 : 0.0;
-    }while(_increment_odometer(coords,out_shape._shapes));
+    assert(in_shape == out_shape);
+
+    this->pool->reset();
+    std::size_t n_threads = this->pool->size();
+    std::size_t scope = (in_shape.n_elements + n_threads - 1) / n_threads;
+    
+    for(std::size_t i = 0; i < n_threads; i++){
+        this->pool->assign_to(
+            i, &Routines::binary_positive_mask,
+            i, scope, in_shape.n_elements,
+            in, in_shape,
+            out, out_shape
+        );
+    }
+    
+    this->pool->synchronize();
+    return;
 }
 
