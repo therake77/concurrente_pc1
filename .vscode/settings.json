@@ -1,3 +1,10 @@
 {
-    "cmake.sourceDirectory": "C:/Users/USER/Documents/concurrente_pc1/jarem"
+    "cmake.sourceDirectory": "C:/Users/USER/Documents/concurrente_pc1/jarem",
+    "java.project.sourcePaths": [
+        "joaquin"
+    ],
+    "java.project.referencedLibraries": [
+        "joaquin\\lib\\jcuda-12.6.0.jar",
+        "joaquin\\lib\\jcuda-natives-12.6.0-windows-x86_64.jar"
+    ]
 }
