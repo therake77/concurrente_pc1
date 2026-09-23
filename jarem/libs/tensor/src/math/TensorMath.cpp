@@ -356,22 +356,24 @@ void TensorMath::softmax(const Tensor& a, Tensor& out){
 
 void TensorMath::sum(const Tensor& a, std::size_t axis, Tensor& out){
     _ensure_same_device(a,out);
+    
+    //Checking for shape irregularities
     Shape a_shape_copy = a.shape;
     Shape out_shape_copy = out.shape;
+    Shape out_shape_broadcasted = out.shape;
     if(a.shape.n_dim - 1== out.shape.n_dim){
         out_shape_copy = out_shape_copy.unsqueeze(axis);
+        out_shape_broadcasted = out_shape_copy;
     }
-    Shape::broadcast_shapes(a_shape_copy,out_shape_copy);
-    _ensure_same_shape(a_shape_copy,out_shape_copy);
-    //Because of traumas, explicitly zero the axis stride on out
-    out_shape_copy._strides[axis] = 0;
-    out.zeros();
+    Shape::broadcast_shapes(a_shape_copy,out_shape_broadcasted);
+    _ensure_same_shape(a_shape_copy,out_shape_broadcasted);
+
     auto dev = a.getDevice();
     dev->math->sum(
         a.data(),
-        a_shape_copy,
+        a.shape,
         out.data(),
-        out_shape_copy,
+        out_shape_copy,     //Only unsqueezed
         axis
     );
     return;
